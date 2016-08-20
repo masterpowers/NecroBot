@@ -40,7 +40,6 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public PlayerConfig PlayerSettings = new PlayerConfig();
         public SoftBanConfig SoftBanSettings = new SoftBanConfig();
         public GoogleWalkConfig GoogleWalkConfig = new GoogleWalkConfig();
-
         public List<KeyValuePair<ItemId, int>> ItemRecycleFilter = new List<KeyValuePair<ItemId, int>>
         {
             new KeyValuePair<ItemId, int>(ItemId.ItemUnknown, 0),

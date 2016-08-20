@@ -160,6 +160,7 @@ namespace PoGo.NecroBot.CLI
             session.EventDispatcher.EventReceived += evt => aggregator.Listen(evt, session);
             if (settings.WebsocketsSettings.UseWebsocket)
             {
+                Logger.Write("soket ok,", LogLevel.Warning, ConsoleColor.Green);
                 var websocket = new WebSocketInterface(settings.WebsocketsSettings.WebSocketPort, session);
                 session.EventDispatcher.EventReceived += evt => websocket.Listen(evt, session);
             }

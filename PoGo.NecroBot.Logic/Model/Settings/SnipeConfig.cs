@@ -18,5 +18,6 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public bool SnipeIgnoreUnknownIv;
         public bool UseTransferIvForSnipe;
         public bool SnipePokemonNotInPokedex;
+        public bool ManualWalkingSnipe = true;
     }
 }

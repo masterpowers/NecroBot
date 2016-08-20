@@ -114,6 +114,7 @@ namespace PoGo.NecroBot.Logic.Interfaces.Configuration
         int MinDelayBetweenSnipes { get; }
         double SnipingScanOffset { get; }
         bool SnipePokemonNotInPokedex { get; }
+        bool ManualWalkingSnipe { get; }
         bool RandomizeRecycle { get; }
         int RandomRecycleValue { get; }
         bool DelayBetweenRecycleActions { get; }

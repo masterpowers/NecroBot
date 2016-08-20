@@ -217,6 +217,7 @@
     <Compile Include="Strategies\Walk\HumanPathWalkingStrategy.cs" />
     <Compile Include="Strategies\Walk\HumanStrategy.cs" />
     <Compile Include="Strategies\Walk\IWalkStrategy.cs" />
+    <Compile Include="Tasks\ManualWalkSnipeTask.cs" />
     <Compile Include="Tasks\EggsListTask.cs" />
     <Compile Include="Tasks\EvolveSpecificPokemonTask.cs" />
     <Compile Include="Tasks\FavoritePokemonTask.cs" />
