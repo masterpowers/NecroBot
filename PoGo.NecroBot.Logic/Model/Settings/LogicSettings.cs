@@ -150,7 +150,13 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public int MinDelayBetweenSnipes => _settings.SnipingSettings.MinDelayBetweenSnipes;
         public double SnipingScanOffset => _settings.SnipingSettings.SnipingScanOffset;
         public bool SnipePokemonNotInPokedex => _settings.SnipingSettings.SnipePokemonNotInPokedex;
-        public bool ManualWalkingSnipe => _settings.SnipingSettings.ManualWalkingSnipe;
+        public bool HumanWalkingSnipe => _settings.SnipingSettings.HumanWalkingSnipe;
+        public double HumanWalkingSnipeMaxDistance => _settings.SnipingSettings.HumanWalkingSnipeMaxDistance;
+        public double HumanWalkingSnipeMaxEstimateTime => _settings.SnipingSettings.HumanWalkingSnipeMaxEstimateTime;
+        public bool HumanWalkingSnipeTryCatchEmAll => _settings.SnipingSettings.HumanWalkingSnipeTryCatchEmAll;
+        public bool HumanWalkingSnipeCatchPokemonWhileWalking => _settings.SnipingSettings.HumanWalkingSnipeCatchPokemonWhileWalking;
+        public int HumanWalkingSnipeCatchEmAllMinBalls => _settings.SnipingSettings.HumanWalkingSnipeCatchEmAllMinBalls;
+
         public bool RandomizeRecycle => _settings.RecycleSettings.RandomizeRecycle;
         public int RandomRecycleValue => _settings.RecycleSettings.RandomRecycleValue;
         public bool DelayBetweenRecycleActions => _settings.RecycleSettings.DelayBetweenRecycleActions;

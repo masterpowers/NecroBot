@@ -25,9 +25,11 @@ namespace PoGo.NecroBot.Logic.Tasks
         public static int TimesZeroXPawarded;
         private static int storeRI;
         private static int RandomNumber;
+        private static bool firstTime = true;
 
         public static async Task Execute(ISession session, CancellationToken cancellationToken)
         {
+
             cancellationToken.ThrowIfCancellationRequested();
 
             var distanceFromStart = LocationUtils.CalculateDistanceInMeters(
@@ -36,9 +38,9 @@ namespace PoGo.NecroBot.Logic.Tasks
 
             // Edge case for when the client somehow ends up outside the defined radius
             if (session.LogicSettings.MaxTravelDistanceInMeters != 0 &&
-                distanceFromStart > session.LogicSettings.MaxTravelDistanceInMeters)
+                distanceFromStart > session.LogicSettings.MaxTravelDistanceInMeters && firstTime)
             {
-
+                firstTime = false;
                 Logger.Write(
                     session.Translation.GetTranslation(TranslationString.FarmPokestopsOutsideRadius, distanceFromStart),
                     LogLevel.Warning);
@@ -145,22 +147,36 @@ namespace PoGo.NecroBot.Logic.Tasks
                 if (session.LogicSettings.SnipeAtPokestops || session.LogicSettings.UseSnipeLocationServer)
                     await SnipePokemonTask.Execute(session, cancellationToken);
 
-                if (session.LogicSettings.ManualWalkingSnipe)
-                    await ManualWalkSnipeTask.Execute(session, cancellationToken,
-                       async (double lat, double lng) =>
-                       {
-                           // await FortPokeStop(session, cancellationToken, eggWalker, pokeStop);
-                           await Task.FromResult<bool>(true);
-                       }
-                        );
-                //pokeStop
-                var walkedDistance = LocationUtils.CalculateDistanceInMeters(pokeStop.Latitude, pokeStop.Longitude, session.Client.CurrentLatitude, session.Client.CurrentLongitude);
-                if (walkedDistance > 100)
+                if (session.LogicSettings.HumanWalkingSnipe)
                 {
+                    await HumanWalkSnipeTask.Execute(session, cancellationToken,
+                async (double lat, double lng) =>
+                {
+                    //idea of this function is to spin pokestop on way. maybe risky.
+                    await Task.FromResult<bool>(true);
+                },
+                 async () =>
+                 {
+                     var nearestStop = pokestopList.OrderBy(i =>
+                             LocationUtils.CalculateDistanceInMeters(session.Client.CurrentLatitude,
+                                 session.Client.CurrentLongitude, i.Latitude, i.Longitude)).FirstOrDefault();
+
+                     var walkedDistance = LocationUtils.CalculateDistanceInMeters(nearestStop.Latitude, nearestStop.Longitude, session.Client.CurrentLatitude, session.Client.CurrentLongitude);
+                     if (walkedDistance > 350)
+                     {
+                         await Task.Delay(15000);
+                         var nearbyPokeStops = await GetPokeStops(session);
+                         var notexists = nearbyPokeStops.Where(p => !pokestopList.Any(x => x.Id == p.Id)).ToList();
+                         pokestopList.AddRange(notexists);
+                         session.EventDispatcher.Send(new PokeStopListEvent { Forts = pokestopList });
+                         Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeAddedPokestop, walkedDistance, notexists.Count), LogLevel.Sniper, ConsoleColor.Yellow);
+                     }
+                     // await Task.FromResult<bool>(true);
+                 });
                 }
             }
         }
-
+     
         private static async Task FortPokeStop(ISession session, CancellationToken cancellationToken, EggWalker eggWalker, FortData pokeStop)
         {
             var distance = LocationUtils.CalculateDistanceInMeters(session.Client.CurrentLatitude,
