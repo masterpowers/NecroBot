@@ -219,6 +219,7 @@ namespace PoGo.NecroBot.Logic.Model.Settings
             {PokemonId.Dragonite, new TransferFilter(2600, 6, false, 90, "or", 1)}
         };
 
+        public Dictionary<PokemonId, HumanWalkSnipeFilter> HumanWalkSnipeFilters = HumanWalkSnipeFilter.Default();
         public SnipeSettings PokemonToSnipe = new SnipeSettings
         {
             Locations = new List<Location>

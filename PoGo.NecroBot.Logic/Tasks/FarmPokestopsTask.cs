@@ -153,7 +153,19 @@ namespace PoGo.NecroBot.Logic.Tasks
                 async (double lat, double lng) =>
                 {
                     //idea of this function is to spin pokestop on way. maybe risky.
-                    await Task.FromResult<bool>(true);
+                    var reachablePokestops = pokestopList.Where(i =>
+                            LocationUtils.CalculateDistanceInMeters(session.Client.CurrentLatitude,
+                                session.Client.CurrentLongitude, i.Latitude, i.Longitude) < 30.0)
+                                   .ToList();
+                    reachablePokestops = reachablePokestops.OrderBy(i => LocationUtils.CalculateDistanceInMeters(session.Client.CurrentLatitude,
+                            session.Client.CurrentLongitude, i.Latitude, i.Longitude))
+                            .ToList();
+                    //Logger.Write($"{reachablePokestops.Count} pokestops reachable.", color: ConsoleColor.Magenta);
+                    foreach (var ps in reachablePokestops)
+                    {
+                        pokestopList.Remove(ps);
+                        await FortPokeStop(session, cancellationToken, eggWalker, ps);
+                    }
                 },
                  async () =>
                  {
@@ -164,8 +176,8 @@ namespace PoGo.NecroBot.Logic.Tasks
                      var walkedDistance = LocationUtils.CalculateDistanceInMeters(nearestStop.Latitude, nearestStop.Longitude, session.Client.CurrentLatitude, session.Client.CurrentLongitude);
                      if (walkedDistance > 350)
                      {
-                         await Task.Delay(15000);
-                         var nearbyPokeStops = await GetPokeStops(session);
+                         await Task.Delay(3000);
+                         var nearbyPokeStops = await GetPokeStops(session, session.Client.CurrentLatitude, session.Client.CurrentLongitude);
                          var notexists = nearbyPokeStops.Where(p => !pokestopList.Any(x => x.Id == p.Id)).ToList();
                          pokestopList.AddRange(notexists);
                          session.EventDispatcher.Send(new PokeStopListEvent { Forts = pokestopList });
@@ -176,7 +188,7 @@ namespace PoGo.NecroBot.Logic.Tasks
                 }
             }
         }
-     
+
         private static async Task FortPokeStop(ISession session, CancellationToken cancellationToken, EggWalker eggWalker, FortData pokeStop)
         {
             var distance = LocationUtils.CalculateDistanceInMeters(session.Client.CurrentLatitude,
@@ -283,10 +295,11 @@ namespace PoGo.NecroBot.Logic.Tasks
             await eggWalker.ApplyDistance(distance, cancellationToken);
         }
 
-        private static async Task<List<FortData>> GetPokeStops(ISession session)
+        private static async Task<List<FortData>> GetPokeStops(ISession session, double latitude = 0.0, double longitude=0.0)
         {
             var mapObjects = await session.Client.Map.GetMapObjects();
-
+            latitude = latitude == 0.0 ? session.Settings.DefaultLatitude: latitude;
+            longitude = longitude == 0.0 ? session.Settings.DefaultLongitude: longitude;
             // Wasn't sure how to make this pretty. Edit as needed.
             var pokeStops = mapObjects.Item1.MapCells.SelectMany(i => i.Forts)
                 .Where(
@@ -295,7 +308,8 @@ namespace PoGo.NecroBot.Logic.Tasks
                         i.CooldownCompleteTimestampMs < DateTime.UtcNow.ToUnixTime() &&
                         ( // Make sure PokeStop is within max travel distance, unless it's set to 0.
                             LocationUtils.CalculateDistanceInMeters(
-                                session.Settings.DefaultLatitude, session.Settings.DefaultLongitude,
+                                latitude,
+                                longitude,
                                 i.Latitude, i.Longitude) < session.LogicSettings.MaxTravelDistanceInMeters ||
                         session.LogicSettings.MaxTravelDistanceInMeters == 0)
                 );

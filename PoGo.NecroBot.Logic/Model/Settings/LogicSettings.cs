@@ -1,6 +1,7 @@
 
 #region using directives
 
+using System;
 using System.Collections.Generic;
 using PoGo.NecroBot.Logic.Interfaces.Configuration;
 using POGOProtos.Enums;
@@ -122,6 +123,7 @@ namespace PoGo.NecroBot.Logic.Model.Settings
 
         public ICollection<PokemonId> PokemonToUseMasterball => _settings.PokemonToUseMasterball;
         public Dictionary<PokemonId, TransferFilter> PokemonsTransferFilter => _settings.PokemonsTransferFilter;
+        public Dictionary<PokemonId, HumanWalkSnipeFilter> HumanWalkSnipeFilters => _settings.HumanWalkSnipeFilters;
         public bool StartupWelcomeDelay => _settings.ConsoleSettings.StartupWelcomeDelay;
         public bool UseGoogleWalk => _settings.GoogleWalkConfig.UseGoogleWalk;
         public bool UseGoogleWalkCache => _settings.GoogleWalkConfig.Cache;
@@ -150,11 +152,15 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public int MinDelayBetweenSnipes => _settings.SnipingSettings.MinDelayBetweenSnipes;
         public double SnipingScanOffset => _settings.SnipingSettings.SnipingScanOffset;
         public bool SnipePokemonNotInPokedex => _settings.SnipingSettings.SnipePokemonNotInPokedex;
-        public bool HumanWalkingSnipe => _settings.SnipingSettings.HumanWalkingSnipe;
+        public bool HumanWalkingSnipe => _settings.SnipingSettings.HumanWalkingSnipeDisplayList;
+        public bool HumanWalkingSnipeDisplayList => _settings.SnipingSettings.HumanWalkingSnipeDisplayList;
         public double HumanWalkingSnipeMaxDistance => _settings.SnipingSettings.HumanWalkingSnipeMaxDistance;
         public double HumanWalkingSnipeMaxEstimateTime => _settings.SnipingSettings.HumanWalkingSnipeMaxEstimateTime;
         public bool HumanWalkingSnipeTryCatchEmAll => _settings.SnipingSettings.HumanWalkingSnipeTryCatchEmAll;
         public bool HumanWalkingSnipeCatchPokemonWhileWalking => _settings.SnipingSettings.HumanWalkingSnipeCatchPokemonWhileWalking;
+
+        public bool HumanWalkingSnipeSpinWhileWalking => _settings.SnipingSettings.HumanWalkingSnipeSpinWhileWalking;
+        public bool  HumanWalkingSnipeAlwaysWalkBack =>  _settings.SnipingSettings.HumanWalkingSnipeAlwaysWalkBack;
         public int HumanWalkingSnipeCatchEmAllMinBalls => _settings.SnipingSettings.HumanWalkingSnipeCatchEmAllMinBalls;
 
         public bool RandomizeRecycle => _settings.RecycleSettings.RandomizeRecycle;
@@ -164,5 +170,8 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public int TotalAmountOfPotionsToKeep => _settings.RecycleSettings.TotalAmountOfPotionsToKeep;
         public int TotalAmountOfRevivesToKeep => _settings.RecycleSettings.TotalAmountOfRevivesToKeep;
         public int TotalAmountOfBerriesToKeep => _settings.RecycleSettings.TotalAmountOfBerriesToKeep;
+
+        public double HumanWalkingSnipeSnipingScanOffset => _settings.SnipingSettings.HumanWalkingSnipeSnipingScanOffset;
+      
     }
 }
