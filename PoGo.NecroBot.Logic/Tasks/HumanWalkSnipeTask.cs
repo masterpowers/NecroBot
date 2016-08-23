@@ -199,7 +199,7 @@ namespace PoGo.NecroBot.Logic.Tasks
         {
             if (refreshData)
             {
-                ReloadData(lat, lng);
+                FetchData(lat, lng);
             }
 
             rarePokemons.RemoveAll(p => p.expired < DateTime.Now);
@@ -244,6 +244,21 @@ namespace PoGo.NecroBot.Logic.Tasks
             return new List<RarePokemonInfo>();
 
         }
+
+        private static void FetchData(double lat, double lng)
+        {
+            FetchFromPokeradar(lat, lng);
+            FetchFromSkiplagged(lat, lat);
+            //process data
+            PostProcessDataFetched();
+            
+        }
+
+        private static void PostProcessDataFetched()
+        {
+            throw new NotImplementedException();
+        }
+
         public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
@@ -253,7 +268,7 @@ namespace PoGo.NecroBot.Logic.Tasks
         }
 
         private static DateTime lastUpdated = DateTime.Now.AddMinutes(-10);
-        private static void ReloadData(double lat, double lng)
+        private static void FetchFromPokeradar(double lat, double lng)
         {
             if ((DateTime.Now - lastUpdated).TotalSeconds < 30) return; //do not reload data if too short
 
@@ -336,5 +351,80 @@ namespace PoGo.NecroBot.Logic.Tasks
                 Logger.Write("Error loading data", LogLevel.Error, ConsoleColor.DarkRed);
             }
         }
+
+        private static List<RarePokemonInfo> FetchFromSkiplagged(double lat, double lng)
+        {
+            List<RarePokemonInfo> results = new List<RarePokemonInfo>();
+
+            string url = $"https://skiplagged.com/api/pokemon.php?bounds=";
+
+            HttpClient client = new HttpClient();
+            client.DefaultRequestHeaders.Accept.TryParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+            client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate, sdch, br");
+            client.DefaultRequestHeaders.Host = "skiplagged.com";
+            client.DefaultRequestHeaders.UserAgent.TryParseAdd("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36");
+
+            client.GetStringAsync(url).ContinueWith((t) =>
+            {
+                var response = t.Result;
+                results = GetJsonList(response);
+               
+            }).Wait();
+            return results;
+        }
+        private static List<RarePokemonInfo> GetJsonList(string reader)
+        {
+            var wrapper = JsonConvert.DeserializeObject<SkippedLaggedWrap>(reader);
+            var list = new List<RarePokemonInfo>();
+            foreach (var result in wrapper.pokemons)
+            {
+                var sniperInfo = Map(result);
+                if (sniperInfo != null)
+                {
+                    list.Add(sniperInfo);
+                }
+            }
+            return list;
+        }
+
+        private static RarePokemonInfo Map(pokemon result)
+        {
+            throw new NotImplementedException();
+        }
     }
+
+    public class SkippedLaggedWrap
+    {
+        public double duration { get; set; }
+        public List<pokemon> pokemons { get; set; }
+        public SkippedLaggedWrap()
+        {
+            pokemons = new List<pokemon>();
+        }
+    }
+    public class pokemon
+    {
+        public DateTime UnixTimeStampToDateTime(double unixTimeStamp)
+        {
+            // Unix timestamp is seconds past epoch
+            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
+            return dtDateTime;
+        }
+
+        public DateTime expires_date
+        {
+            get
+            {
+                return UnixTimeStampToDateTime(expires);
+            }
+        }
+
+        public double expires { get; set; }
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+        public int pokemon_id { get; set; }
+        public string pokemon_name { get; set; }
+    }
+
 }
