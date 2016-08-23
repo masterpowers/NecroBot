@@ -152,7 +152,7 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public int MinDelayBetweenSnipes => _settings.SnipingSettings.MinDelayBetweenSnipes;
         public double SnipingScanOffset => _settings.SnipingSettings.SnipingScanOffset;
         public bool SnipePokemonNotInPokedex => _settings.SnipingSettings.SnipePokemonNotInPokedex;
-        public bool HumanWalkingSnipe => _settings.SnipingSettings.HumanWalkingSnipeDisplayList;
+        public bool EnableHumanWalkingSnipe => _settings.SnipingSettings.EnableHumanWalkingSnipe;
         public bool HumanWalkingSnipeDisplayList => _settings.SnipingSettings.HumanWalkingSnipeDisplayList;
         public double HumanWalkingSnipeMaxDistance => _settings.SnipingSettings.HumanWalkingSnipeMaxDistance;
         public double HumanWalkingSnipeMaxEstimateTime => _settings.SnipingSettings.HumanWalkingSnipeMaxEstimateTime;

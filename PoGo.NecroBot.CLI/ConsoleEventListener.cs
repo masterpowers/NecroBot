@@ -381,7 +381,9 @@ namespace PoGo.NecroBot.CLI
                         ev.Expires /60,
                         ev.Expires %60,
                         ev.Estimate / 60,
-                        ev.Estimate % 60),
+                        ev.Estimate % 60,
+                        ev.SpinPokeStop?"Yes":"No",
+                        ev.CatchPokemon ? "Yes" : "No"),
                         LogLevel.Sniper,
                         ConsoleColor.Yellow);
                     break;

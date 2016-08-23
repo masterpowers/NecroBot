@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using PoGo.NecroBot.Logic.Model;
+using PoGo.NecroBot.Logic.Model.Settings;
 using POGOProtos.Enums;
 using Location = PoGo.NecroBot.Logic.Model.Settings.Location;
 
@@ -30,5 +31,8 @@ namespace PoGo.NecroBot.Logic.Event
         public double Expires { get; internal set; }
         public int Estimate { get; internal set; }
         public List<string> RarePokemons { get; internal set; }
+        public HumanWalkSnipeFilter Setting { get; internal set; }
+        public bool SpinPokeStop { get; set; }
+        public bool CatchPokemon { get; set; }
     }
 }

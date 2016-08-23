@@ -27,6 +27,8 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public bool HumanWalkingSnipeSpinWhileWalking = true;
         public bool HumanWalkingSnipeAlwaysWalkBack = false;
         public double HumanWalkingSnipeSnipingScanOffset = 0.015;
+
+        public bool EnableHumanWalkingSnipe = true;
     }
 
 }

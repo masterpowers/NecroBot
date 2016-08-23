@@ -33,7 +33,13 @@ namespace PoGo.NecroBot.Logic.Tasks
             public double latitude { get; set; }
             public double longitude { get; set; }
             public int pokemonId { get; set; }
-            public string id { get; set; }
+            public string id
+            {
+                get
+                {
+                    return $"{pokemonId}-{latitude}-{longitude}";
+                }
+            }
             public bool caught { get; set; }
             public HumanWalkSnipeFilter FilterSetting { get; set; }
 
@@ -101,8 +107,8 @@ namespace PoGo.NecroBot.Logic.Tasks
             if (!_setting.CatchPokemon) return;
 
             pokemonToBeSnipedIds = _setting.PokemonToSnipe.Pokemon;
-            pokemonToBeSnipedIds.AddRange(_setting.HumanWalkSnipeFilters.Where(x=>!pokemonToBeSnipedIds.Any(t => t == x.Key)).Select(x => x.Key).ToList());      //this will combine with pokemon snipe filter
-            
+            pokemonToBeSnipedIds.AddRange(_setting.HumanWalkSnipeFilters.Where(x => !pokemonToBeSnipedIds.Any(t => t == x.Key)).Select(x => x.Key).ToList());      //this will combine with pokemon snipe filter
+
             if (_setting.HumanWalkingSnipeTryCatchEmAll)
             {
                 var checkBall = await CheckPokeballsToSnipe(_setting.HumanWalkingSnipeCatchEmAllMinBalls, session, cancellationToken);
@@ -120,12 +126,15 @@ namespace PoGo.NecroBot.Logic.Tasks
                 foreach (var pokemon in pokemons)
                 {
                     caughtAnyPokemonInThisWalk = true;
-
                     CalculateDistanceAndEstTime(pokemon);
                     var remainTimes = (pokemon.expired - DateTime.Now).TotalSeconds * 0.9; //just use 90% times
-                    var catchPokemonTimeEST = (pokemon.distance / 100) * 15;  //assume that 100m we catch 1 pokemon and it took 10 second for each.
+                    var catchPokemonTimeEST = (pokemon.distance / 100) * 10;  //assume that 100m we catch 1 pokemon and it took 10 second for each.
                     string strPokemon = session.Translation.GetPokemonTranslation(pokemon.Id);
-                    var spinPokestopEST = (pokemon.distance / 50) * 5;
+                    var spinPokestopEST = (pokemon.distance / 100) * 5;
+
+                    bool catchPokemon = (pokemon.estimateTime + catchPokemonTimeEST) < remainTimes && pokemon.FilterSetting.CatchPokemonWhileWalking;
+                    bool spinPokestop = pokemon.FilterSetting.SpinPokestopWhileWalking &&  (pokemon.estimateTime + catchPokemonTimeEST + spinPokestopEST) < remainTimes;
+
                     session.EventDispatcher.Send(new HumanWalkSnipeEvent()
                     {
                         PokemonId = pokemon.Id,
@@ -134,6 +143,9 @@ namespace PoGo.NecroBot.Logic.Tasks
                         Distance = pokemon.distance,
                         Expires = (pokemon.expired - DateTime.Now).TotalSeconds,
                         Estimate = (int)pokemon.estimateTime,
+                        Setting = pokemon.FilterSetting,
+                        CatchPokemon = catchPokemon,
+                        SpinPokeStop = pokemon.FilterSetting.SpinPokestopWhileWalking,
                         Type = HumanWalkSnipeEventTypes.StartWalking
                     });
 
@@ -143,42 +155,27 @@ namespace PoGo.NecroBot.Logic.Tasks
                        {
                            var distance = LocationUtils.CalculateDistanceInMeters(pokemon.latitude, pokemon.longitude, session.Client.CurrentLatitude, session.Client.CurrentLongitude);
 
-                           if (pokemon.FilterSetting.CatchPokemonWhileWalking
-                               && distance > 50
-                               && ((pokemon.estimateTime + catchPokemonTimeEST) < remainTimes)
-                           )
+                           if (catchPokemon && distance > 50)
                            {
                                // Catch normal map Pokemon
                                await CatchNearbyPokemonsTask.Execute(session, cancellationToken);
-                               //Catch Incense Pokemon
-                               // await CatchIncensePokemonsTask.Execute(session, cancellationToken);
-                               //Logger.Write("TASK EXECUTE catch rate pokemon step moving.....", LogLevel.Info, ConsoleColor.Yellow);
                            }
-                           if (actionWhenWalking != null && 
-                           _setting.HumanWalkingSnipeSpinWhileWalking &&
-                           (pokemon.estimateTime + catchPokemonTimeEST + spinPokestopEST) < remainTimes)
+                           if (actionWhenWalking != null && spinPokestop)
                            {
                                await actionWhenWalking(session.Client.CurrentLatitude, session.Client.CurrentLongitude);
                            }
-                           //return true;
                            return await Task.FromResult<bool>(true);
                        },
                        session,
                        cancellationToken);
-                    //.ContinueWith(async (p) =>
+                    session.EventDispatcher.Send(new HumanWalkSnipeEvent()
                     {
-                        session.EventDispatcher.Send(new HumanWalkSnipeEvent()
-                        {
-                            Latitude = pokemon.latitude,
-                            Longitude = pokemon.longitude,
-                            Type = HumanWalkSnipeEventTypes.DestinationReached
-                        });
-                        await CatchNearbyPokemonsTask.Execute(session, cancellationToken);
-                        await CatchIncensePokemonsTask.Execute(session, cancellationToken);
-                    }
-                    //);
-
-
+                        Latitude = pokemon.latitude,
+                        Longitude = pokemon.longitude,
+                        Type = HumanWalkSnipeEventTypes.DestinationReached
+                    });
+                    await CatchNearbyPokemonsTask.Execute(session, cancellationToken);
+                    await CatchIncensePokemonsTask.Execute(session, cancellationToken);
                 }
                 keepWalking = _setting.HumanWalkingSnipeTryCatchEmAll && pokemons.Count > 0;
             }
@@ -209,8 +206,6 @@ namespace PoGo.NecroBot.Logic.Tasks
                 CalculateDistanceAndEstTime(p);
             });
 
-            //rarePokemons.RemoveAll(p=> p.expired < DateTime.Now.AddSeconds(p.estimateTime));
-
             //remove list not reach able (expired)
             if (rarePokemons.Count > 0)
             {
@@ -220,43 +215,102 @@ namespace PoGo.NecroBot.Logic.Tasks
                     p.estimateTime < p.FilterSetting.MaxWalkTimes
                 )
                 .OrderBy(p => p.FilterSetting.Priority)
-                .ThenBy(p=>p.distance);
+                .ThenBy(p => p.distance);
                 if (ordered != null && ordered.Count() > 0)
                 {
                     var first = ordered.First();
                     first.caught = true;
-                    //rarePokemons.RemoveAt(0);
                     var results = new List<RarePokemonInfo>() { first };
-                    //foreach (var item in ordered)
-                    //{
-                    //    if (item.id == first.id) continue;
-
-                    //    if (LocationUtils.CalculateDistanceInMeters(first.latitude, first.longitude, item.latitude, item.longitude) < 200)
-                    //    {
-                    //        results.Add(item);
-                    //    }
-                    //}
                     return results;
                 }
             }
-
-
             return new List<RarePokemonInfo>();
-
         }
 
         private static void FetchData(double lat, double lng)
         {
-            FetchFromPokeradar(lat, lng);
-            FetchFromSkiplagged(lat, lat);
-            //process data
-            PostProcessDataFetched();
-            
+            if (lastUpdated > DateTime.Now.AddSeconds(-30)) return;
+            List<Task<List<RarePokemonInfo>>> allTasks = new List<Task<List<RarePokemonInfo>>>()
+            {
+                FetchFromPokeradar(lat, lng)   ,
+                //FetchFromSkiplagged(lat, lng)
+            };
+
+            Task.WaitAll(allTasks.ToArray());
+            lastUpdated = DateTime.Now;
+            var fetchedPokemons = allTasks.SelectMany(p => p.Result);
+
+            PostProcessDataFetched(fetchedPokemons);
         }
 
-        private static void PostProcessDataFetched()
+        private static void PostProcessDataFetched(IEnumerable<RarePokemonInfo> pokemons)
         {
-            throw new NotImplementedException();
+            var rw = new Random();
+            var speedInMetersPerSecond = _setting.WalkingSpeedInKilometerPerHour / 3.6;
+            int count = 0;
+
+            foreach (var item in pokemons)
+            {
+                CalculateDistanceAndEstTime(item);
+
+                //the pokemon data already in the list
+                if (rarePokemons.Any(x => x.id == item.id)) continue;
+                //check if pokemon in the snip list
+                if (!pokemonToBeSnipedIds.Any(x => x == item.Id)) continue;
+
+                count++;
+                var snipeSetting = _setting.HumanWalkSnipeFilters.FirstOrDefault(x => x.Key == item.Id);
+
+                HumanWalkSnipeFilter config = new HumanWalkSnipeFilter(_setting.HumanWalkingSnipeMaxDistance,
+                    _setting.HumanWalkingSnipeMaxEstimateTime,
+                    3, //default priority
+                    _setting.HumanWalkingSnipeTryCatchEmAll,
+                    _setting.HumanWalkingSnipeSpinWhileWalking);
+
+                if (_setting.HumanWalkSnipeFilters.Any(x => x.Key == item.Id))
+                {
+                    config = _setting.HumanWalkSnipeFilters.First(x => x.Key == item.Id).Value;
+                }
+                item.FilterSetting = config;
+
+                rarePokemons.Add(item);
+            }
+
+            if (count > 0)
+            {
+                _session.EventDispatcher.Send(new HumanWalkSnipeEvent()
+                {
+                    Type = HumanWalkSnipeEventTypes.PokemonScanned,
+                    RarePokemons = rarePokemons.Select(p => p.Id.ToString()).ToList()
+                });
+
+                if (_setting.HumanWalkingSnipeDisplayList)
+                {
+                    rarePokemons = rarePokemons.OrderBy(p => p.FilterSetting.Priority).OrderBy(p => p.distance).ToList();
+                    var ordered = rarePokemons.Where(p => p.expired > DateTime.Now.AddSeconds(p.estimateTime)).ToList();
+
+                    if (ordered.Count > 0)
+                    {
+                        Logger.Write(string.Format("          |  Name                  |  Distance     |  Expires        |  Travel times   | Catchable"));
+                        foreach (var pokemon in ordered)
+                        {
+                            string name = _session.Translation.GetPokemonTranslation(pokemon.Id);
+                            name += "".PadLeft(20-name.Length , ' ');
+                            Logger.Write(string.Format("SNIPPING  |  {0}  |  {1:0.00}m  \t|  {2:mm} min {2:ss} sec  |  {3:00} min {4:00} sec  | {5}",
+                                name,
+                                pokemon.distance,
+                                pokemon.expired - DateTime.Now,
+                                pokemon.estimateTime / 60,
+                                pokemon.estimateTime % 60,
+                                pokemon.expired > DateTime.Now.AddSeconds(pokemon.estimateTime) ? "Possible" : "Missied"
+                                ));
+                        }
+                    }
+                }
+
+            }
+
+
         }
 
         public static DateTime UnixTimeStampToDateTime(double unixTimeStamp)
@@ -268,108 +322,54 @@ namespace PoGo.NecroBot.Logic.Tasks
         }
 
         private static DateTime lastUpdated = DateTime.Now.AddMinutes(-10);
-        private static void FetchFromPokeradar(double lat, double lng)
+        private static async Task<List<RarePokemonInfo>> FetchFromPokeradar(double lat, double lng)
         {
-            if ((DateTime.Now - lastUpdated).TotalSeconds < 30) return; //do not reload data if too short
-
+            List<RarePokemonInfo> results = new List<RarePokemonInfo>();
             try
             {
-            
-            HttpClient client = new HttpClient();
-            double offset = _setting.HumanWalkingSnipeSnipingScanOffset; //0.015 
-            string url = $"https://www.pokeradar.io/api/v1/submissions?deviceId=1fd29370661111e6b850a13a2bdc4ebf&minLatitude={lat - offset}&maxLatitude={lat + offset}&minLongitude={lng - offset}&maxLongitude={lng + offset}&pokemonId=0";
 
-            var source = client.GetStringAsync(url);
+                HttpClient client = new HttpClient();
+                double offset = _setting.HumanWalkingSnipeSnipingScanOffset; //0.015 
+                string url = $"https://www.pokeradar.io/api/v1/submissions?deviceId=1fd29370661111e6b850a13a2bdc4ebf&minLatitude={lat - offset}&maxLatitude={lat + offset}&minLongitude={lng - offset}&maxLongitude={lng + offset}&pokemonId=0";
 
-            var data = JsonConvert.DeserializeObject<Wrapper>(source.Result);
+                var task = await client.GetStringAsync(url);
 
-            var rw = new Random();
-            var speedInMetersPerSecond = _setting.WalkingSpeedInKilometerPerHour / 3.6;
-            lastUpdated = DateTime.Now;
-            int count = 0;
-            data.data.ForEach((p) =>
-            {
-                p.distance = LocationUtils.CalculateDistanceInMeters(lat, lng, p.latitude, p.longitude);
-                p.estimateTime = p.distance / speedInMetersPerSecond + 30; //margin 30 second
-                //the pokemon data already in the list
-                if (rarePokemons.Any(x => x.id == p.id)) return;
-                //check if pokemon in the snip list
-                if (!pokemonToBeSnipedIds.Any(x => x == p.Id)) return;
-
-                count++;
-                var snipeSetting = _setting.HumanWalkSnipeFilters.FirstOrDefault(x => x.Key == p.Id);
-
-                HumanWalkSnipeFilter config = new HumanWalkSnipeFilter(_setting.HumanWalkingSnipeMaxDistance, 
-                    _setting.HumanWalkingSnipeMaxEstimateTime,
-                    3, //default priority
-                    _setting.HumanWalkingSnipeTryCatchEmAll,
-                    _setting.HumanWalkingSnipeSpinWhileWalking);
-
-                if (_setting.HumanWalkSnipeFilters.Any(x => x.Key == p.Id))
-                {
-                    config = _setting.HumanWalkSnipeFilters.First(x => x.Key == p.Id).Value;
-                }
-                p.FilterSetting = config;
-
-                rarePokemons.Add(p);
-            });
-
-            client.Dispose();
-                if (count > 0)
-                {
-                    _session.EventDispatcher.Send(new HumanWalkSnipeEvent()
-                    {
-                        Type = HumanWalkSnipeEventTypes.PokemonScanned,
-                        RarePokemons = rarePokemons.Select(p => p.Id.ToString()).ToList()
-                    });
-
-                    if (_setting.HumanWalkingSnipeDisplayList)
-                    {
-                        rarePokemons = rarePokemons.OrderBy(p => p.FilterSetting.Priority).OrderBy(p => p.distance).ToList();
-                        var ordered = rarePokemons.Where(p => p.expired > DateTime.Now.AddSeconds(p.estimateTime)).ToList();
-
-                        if (ordered.Count > 0)
-                        {
-                            Logger.Write(string.Format("          | Name              |  Distance     |  Expires        |  Travel times   | Catchable"));
-                            foreach (var pokemon in ordered)
-                            {
-                                Logger.Write(string.Format("SNIPPING  | {0}  \t|  {1:0.00}m  \t|  {2:mm} min {2:ss} sec  |  {3:00} min {4:00} sec  | {5}",
-                                    _session.Translation.GetPokemonTranslation(pokemon.Id),
-                                    pokemon.distance,
-                                    pokemon.expired - DateTime.Now,
-                                    pokemon.estimateTime / 60,
-                                    pokemon.estimateTime % 60,
-                                    pokemon.expired < DateTime.Now.AddSeconds(pokemon.estimateTime) ? "Possible" : "Missied"
-                                    ));
-                            }
-                        }
-                    }
-
-                }
-            } catch (Exception ex)
+                var data = JsonConvert.DeserializeObject<Wrapper>(task);
+                results = data.data;
+            }
+            catch (Exception ex)
             {
                 Logger.Write("Error loading data", LogLevel.Error, ConsoleColor.DarkRed);
             }
+            return results;
         }
 
-        private static List<RarePokemonInfo> FetchFromSkiplagged(double lat, double lng)
+        private static async Task<List<RarePokemonInfo>> FetchFromSkiplagged(double lat, double lng)
         {
             List<RarePokemonInfo> results = new List<RarePokemonInfo>();
+            var lat1 = lat - _setting.HumanWalkingSnipeSnipingScanOffset;
+            var lat2 = lat + _setting.HumanWalkingSnipeSnipingScanOffset;
+            var lng1 = lng - _setting.HumanWalkingSnipeSnipingScanOffset;
+            var lng2 = lng + _setting.HumanWalkingSnipeSnipingScanOffset;
 
-            string url = $"https://skiplagged.com/api/pokemon.php?bounds=";
+            string url = $"https://skiplagged.com/api/pokemon.php?bounds={lat1},{lng1},{lat2},{lng2}";
 
-            HttpClient client = new HttpClient();
-            client.DefaultRequestHeaders.Accept.TryParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-            client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate, sdch, br");
-            client.DefaultRequestHeaders.Host = "skiplagged.com";
-            client.DefaultRequestHeaders.UserAgent.TryParseAdd("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36");
-
-            client.GetStringAsync(url).ContinueWith((t) =>
+            try
             {
-                var response = t.Result;
-                results = GetJsonList(response);
-               
-            }).Wait();
+                HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Accept.TryParseAdd("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+                client.DefaultRequestHeaders.AcceptEncoding.ParseAdd("gzip, deflate, sdch, br");
+                client.DefaultRequestHeaders.Host = "skiplagged.com";
+                client.DefaultRequestHeaders.UserAgent.TryParseAdd("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/52.0.2743.116 Safari/537.36");
+
+                var json = await client.GetStringAsync(url);
+
+                results = GetJsonList(json);
+            }
+            catch (Exception ex)
+            {
+
+            }
             return results;
         }
         private static List<RarePokemonInfo> GetJsonList(string reader)
@@ -389,7 +389,13 @@ namespace PoGo.NecroBot.Logic.Tasks
 
         private static RarePokemonInfo Map(pokemon result)
         {
-            throw new NotImplementedException();
+            return new RarePokemonInfo()
+            {
+                latitude = result.latitude,
+                longitude = result.longitude,
+                pokemonId = result.pokemon_id,
+                created = result.expires - 15 * 60
+            };
         }
     }
 
