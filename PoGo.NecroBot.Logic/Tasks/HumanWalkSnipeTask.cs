@@ -270,7 +270,7 @@ namespace PoGo.NecroBot.Logic.Tasks
 
             var rw = new Random();
             var speedInMetersPerSecond = _setting.WalkingSpeedInKilometerPerHour / 3.6;
-
+            lastUpdated = DateTime.Now;
             int count = 0;
             data.data.ForEach((p) =>
             {
@@ -311,7 +311,7 @@ namespace PoGo.NecroBot.Logic.Tasks
                     if (_setting.HumanWalkingSnipeDisplayList)
                     {
                         rarePokemons = rarePokemons.OrderBy(p => p.FilterSetting.Priority).OrderBy(p => p.distance).ToList();
-                        var ordered = rarePokemons.Where(p => p.expired < DateTime.Now.AddSeconds(p.estimateTime)).ToList();
+                        var ordered = rarePokemons.Where(p => p.expired > DateTime.Now.AddSeconds(p.estimateTime)).ToList();
 
                         if (ordered.Count > 0)
                         {

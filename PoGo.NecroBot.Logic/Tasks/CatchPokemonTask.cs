@@ -177,7 +177,7 @@ namespace PoGo.NecroBot.Logic.Tasks
                             : encounterId,
                         encounter is EncounterResponse || encounter is IncenseEncounterResponse
                             ? pokemon.SpawnPointId
-                            : currentFortData.Id, pokeball, normalizedRecticleSize, spinModifier, hitPokemon);
+                            : currentFortData.Id, pokeball, normalizedRecticleSize, spinModifier,1);
 
                 var lat = encounter is EncounterResponse || encounter is IncenseEncounterResponse
                              ? pokemon.Latitude : currentFortData.Latitude;

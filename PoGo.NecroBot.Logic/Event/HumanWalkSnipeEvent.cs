@@ -13,7 +13,8 @@ namespace PoGo.NecroBot.Logic.Event
     {
         StartWalking,
         DestinationReached,
-        PokemonScanned
+        PokemonScanned,
+        AddedSnipePokemon
     }
     public class HumanWalkSnipeEvent : IEvent
     {
