@@ -160,7 +160,6 @@ namespace PoGo.NecroBot.Logic.Tasks
                     reachablePokestops = reachablePokestops.OrderBy(i => LocationUtils.CalculateDistanceInMeters(session.Client.CurrentLatitude,
                             session.Client.CurrentLongitude, i.Latitude, i.Longitude))
                             .ToList();
-                    //Logger.Write($"{reachablePokestops.Count} pokestops reachable.", color: ConsoleColor.Magenta);
                     foreach (var ps in reachablePokestops)
                     {
                         pokestopList.Remove(ps);
@@ -183,7 +182,6 @@ namespace PoGo.NecroBot.Logic.Tasks
                          session.EventDispatcher.Send(new PokeStopListEvent { Forts = pokestopList });
                          Logger.Write(session.Translation.GetTranslation(TranslationString.HumanWalkSnipeAddedPokestop, walkedDistance, notexists.Count), LogLevel.Sniper, ConsoleColor.Yellow);
                      }
-                     // await Task.FromResult<bool>(true);
                  });
                 }
             }
