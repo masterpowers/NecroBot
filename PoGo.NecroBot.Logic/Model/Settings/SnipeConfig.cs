@@ -18,9 +18,21 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public bool SnipeIgnoreUnknownIv;
         public bool UseTransferIvForSnipe;
         public bool SnipePokemonNotInPokedex;
+        public bool HumanWalkingSnipeDisplayList = true;
+        public double HumanWalkingSnipeMaxDistance = 1000.0;
+        public double HumanWalkingSnipeMaxEstimateTime = 300.0;
+        public int HumanWalkingSnipeCatchEmAllMinBalls = 100;
         /*SnipeLimit*/
         public bool UseSnipeLimit = true;
         public int SnipeRestSeconds = 10 * 60;
         public int SnipeCountLimit = 39;
+        public bool HumanWalkingSnipeTryCatchEmAll = true;
+        public bool HumanWalkingSnipeCatchPokemonWhileWalking = true;
+        public bool HumanWalkingSnipeSpinWhileWalking = true;
+        public bool HumanWalkingSnipeAlwaysWalkBack = false;
+        public double HumanWalkingSnipeSnipingScanOffset = 0.015;
+
+        public bool EnableHumanWalkingSnipe = true;
     }
+
 }

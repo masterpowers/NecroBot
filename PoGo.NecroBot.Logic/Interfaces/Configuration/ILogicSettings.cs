@@ -120,6 +120,16 @@ namespace PoGo.NecroBot.Logic.Interfaces.Configuration
         int MinDelayBetweenSnipes { get; }
         double SnipingScanOffset { get; }
         bool SnipePokemonNotInPokedex { get; }
+        bool EnableHumanWalkingSnipe { get; }
+        bool HumanWalkingSnipeDisplayList { get; }
+        bool HumanWalkingSnipeSpinWhileWalking { get; }
+        double HumanWalkingSnipeMaxDistance          { get; }
+        bool HumanWalkingSnipeAlwaysWalkBack { get; }
+        double HumanWalkingSnipeMaxEstimateTime { get; }
+        bool HumanWalkingSnipeTryCatchEmAll { get; }
+        int HumanWalkingSnipeCatchEmAllMinBalls { get; }
+        bool HumanWalkingSnipeCatchPokemonWhileWalking { get; }
+        double HumanWalkingSnipeSnipingScanOffset { get; }
         bool RandomizeRecycle { get; }
         int RandomRecycleValue { get; }
         bool DelayBetweenRecycleActions { get; }
@@ -144,7 +154,7 @@ namespace PoGo.NecroBot.Logic.Interfaces.Configuration
         ICollection<PokemonId> PokemonsNotToCatch { get; }
 
         ICollection<PokemonId> PokemonToUseMasterball { get; }
-
+        Dictionary<PokemonId, HumanWalkSnipeFilter> HumanWalkSnipeFilters { get; }
         Dictionary<PokemonId, TransferFilter> PokemonsTransferFilter { get; }
         SnipeSettings PokemonToSnipe { get; }
 

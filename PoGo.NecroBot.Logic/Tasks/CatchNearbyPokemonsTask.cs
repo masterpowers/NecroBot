@@ -11,6 +11,7 @@ using PoGo.NecroBot.Logic.Utils;
 using POGOProtos.Inventory.Item;
 using POGOProtos.Map.Pokemon;
 using POGOProtos.Networking.Responses;
+using System;
 
 #endregion
 
@@ -49,8 +50,8 @@ namespace PoGo.NecroBot.Logic.Tasks
                     return;
                 }
 
-                if( ( session.LogicSettings.UsePokemonSniperFilterOnly && !session.LogicSettings.PokemonToSnipe.Pokemon.Contains( pokemon.PokemonId ) ) ||
-                    ( session.LogicSettings.UsePokemonToNotCatchFilter && session.LogicSettings.PokemonsNotToCatch.Contains( pokemon.PokemonId ) ) )
+                if ((session.LogicSettings.UsePokemonSniperFilterOnly && !session.LogicSettings.PokemonToSnipe.Pokemon.Contains(pokemon.PokemonId)) ||
+                    (session.LogicSettings.UsePokemonToNotCatchFilter && session.LogicSettings.PokemonsNotToCatch.Contains(pokemon.PokemonId)))
                 {
                     Logger.Write(session.Translation.GetTranslation(TranslationString.PokemonSkipped, session.Translation.GetPokemonTranslation(pokemon.PokemonId)));
                     continue;
@@ -69,17 +70,17 @@ namespace PoGo.NecroBot.Logic.Tasks
                 }
                 else if (encounter.Status == EncounterResponse.Types.Status.PokemonInventoryFull)
                 {
-					if (session.LogicSettings.TransferDuplicatePokemon || session.LogicSettings.TransferWeakPokemon)
-					{
-						session.EventDispatcher.Send(new WarnEvent
-						{
-							Message = session.Translation.GetTranslation(TranslationString.InvFullTransferring)
-						});
-						if(session.LogicSettings.TransferDuplicatePokemon)
-							await TransferDuplicatePokemonTask.Execute(session, cancellationToken);
-						if(session.LogicSettings.TransferWeakPokemon)
-							await TransferWeakPokemonTask.Execute(session, cancellationToken);
-					}
+                    if (session.LogicSettings.TransferDuplicatePokemon || session.LogicSettings.TransferWeakPokemon)
+                    {
+                        session.EventDispatcher.Send(new WarnEvent
+                        {
+                            Message = session.Translation.GetTranslation(TranslationString.InvFullTransferring)
+                        });
+                        if (session.LogicSettings.TransferDuplicatePokemon)
+                            await TransferDuplicatePokemonTask.Execute(session, cancellationToken);
+                        if (session.LogicSettings.TransferWeakPokemon)
+                            await TransferWeakPokemonTask.Execute(session, cancellationToken);
+                    }
                     else
                         session.EventDispatcher.Send(new WarnEvent
                         {

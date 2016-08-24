@@ -42,7 +42,6 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public SoftBanConfig SoftBanConfig = new SoftBanConfig();
         public GoogleWalkConfig GoogleWalkConfig = new GoogleWalkConfig();
         public YoursWalkConfig YoursWalkConfig = new YoursWalkConfig();
-
         public List<KeyValuePair<ItemId, int>> ItemRecycleFilter = new List<KeyValuePair<ItemId, int>>
         {
             new KeyValuePair<ItemId, int>(ItemId.ItemUnknown, 0),
@@ -227,6 +226,7 @@ namespace PoGo.NecroBot.Logic.Model.Settings
             {PokemonId.Dragonite, new TransferFilter(2600, 6, false, 90, "or", 1,new List<List<PokemonMove>>() { new List<PokemonMove>() { PokemonMove.DragonBreath,PokemonMove.DragonClaw }},null,"and")},
         };
 
+        public Dictionary<PokemonId, HumanWalkSnipeFilter> HumanWalkSnipeFilters = HumanWalkSnipeFilter.Default();
         public SnipeSettings PokemonToSnipe = new SnipeSettings
         {
             Locations = new List<Location>

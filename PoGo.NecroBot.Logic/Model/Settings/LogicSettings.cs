@@ -1,6 +1,7 @@
 
 #region using directives
 
+using System;
 using System.Collections.Generic;
 using PoGo.NecroBot.Logic.Interfaces.Configuration;
 using POGOProtos.Enums;
@@ -120,12 +121,14 @@ namespace PoGo.NecroBot.Logic.Model.Settings
 
         public ICollection<PokemonId> PokemonToUseMasterball => _settings.PokemonToUseMasterball;
         public Dictionary<PokemonId, TransferFilter> PokemonsTransferFilter => _settings.PokemonsTransferFilter;
-        public bool StartupWelcomeDelay => _settings.ConsoleConfig.StartupWelcomeDelay;
+        public Dictionary<PokemonId, HumanWalkSnipeFilter> HumanWalkSnipeFilters => _settings.HumanWalkSnipeFilters;
+        public bool StartupWelcomeDelay => _settings.ConsoleSettings.StartupWelcomeDelay;
         public bool UseGoogleWalk => _settings.GoogleWalkConfig.UseGoogleWalk;
         public double DefaultStepLength => _settings.GoogleWalkConfig.DefaultStepLength;
         public bool UseGoogleWalkCache => _settings.GoogleWalkConfig.Cache;
         public string GoogleApiKey => _settings.GoogleWalkConfig.GoogleAPIKey;
         public string GoogleHeuristic => _settings.GoogleWalkConfig.GoogleHeuristic;
+        public bool SnipeAtPokestops => _settings.SnipingSettings.SnipeAtPokestops;
 
         public bool UseYoursWalk => _settings.YoursWalkConfig.UseYoursWalk;
         public string YoursWalkHeuristic => _settings.YoursWalkConfig.YoursWalkHeuristic;
@@ -165,7 +168,21 @@ namespace PoGo.NecroBot.Logic.Model.Settings
         public bool UsePokeStopLimit => _settings.PokeStopConfig.UsePokeStopLimit;
         public bool UseCatchLimit => _settings.PokemonConfig.UseCatchLimit;
         public int ResumeTrack => _settings.LocationConfig.ResumeTrack;
+        public bool EnableHumanWalkingSnipe => _settings.SnipingSettings.EnableHumanWalkingSnipe;
+        public bool HumanWalkingSnipeDisplayList => _settings.SnipingSettings.HumanWalkingSnipeDisplayList;
+        public double HumanWalkingSnipeMaxDistance => _settings.SnipingSettings.HumanWalkingSnipeMaxDistance;
+        public double HumanWalkingSnipeMaxEstimateTime => _settings.SnipingSettings.HumanWalkingSnipeMaxEstimateTime;
+        public bool HumanWalkingSnipeTryCatchEmAll => _settings.SnipingSettings.HumanWalkingSnipeTryCatchEmAll;
+        public bool HumanWalkingSnipeCatchPokemonWhileWalking => _settings.SnipingSettings.HumanWalkingSnipeCatchPokemonWhileWalking;
+
+        public bool HumanWalkingSnipeSpinWhileWalking => _settings.SnipingSettings.HumanWalkingSnipeSpinWhileWalking;
+        public bool  HumanWalkingSnipeAlwaysWalkBack =>  _settings.SnipingSettings.HumanWalkingSnipeAlwaysWalkBack;
+        public int HumanWalkingSnipeCatchEmAllMinBalls => _settings.SnipingSettings.HumanWalkingSnipeCatchEmAllMinBalls;
+
         public int ResumeTrackSeg => _settings.LocationConfig.ResumeTrackSeg;
         public int ResumeTrackPt => _settings.LocationConfig.ResumeTrackPt;
+
+        public double HumanWalkingSnipeSnipingScanOffset => _settings.SnipingSettings.HumanWalkingSnipeSnipingScanOffset;
+      
     }
 }
